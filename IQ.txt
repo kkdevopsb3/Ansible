@@ -1,0 +1,326 @@
+
+
+---
+
+ 1. Handling Playbook Failure on One Server
+
+Scenario: Your playbook installs Apache on multiple servers, but one fails. You want execution to continue.
+
+Solution: Use `ignore_errors: yes`
+
+- name: Install Apache
+  yum:
+    name: httpd
+    state: present
+  ignore_errors: yes
+
+Explanation: 
+
+- By default, Ansible stops execution on failure.  
+- `ignore_errors: yes` allows it to continue.  
+- This is useful for non-critical failures.
+
+---
+
+ 2. Running Playbooks on Specific Hosts
+
+Scenario: Ensure a playbook runs only on a specific set of hosts.
+
+Solution: Define hosts in playbook or use `--limit`.
+
+- hosts: webservers
+  tasks:
+    - name: Install Apache
+      yum:
+        name: httpd
+        state: present
+
+Command to target specific hosts:
+
+ansible-playbook site.yml --limit webservers
+
+Explanation:  
+- This helps in controlling execution on specific hosts.
+
+---
+
+ 3. Copy File Only if Changed
+
+Scenario: Copy a configuration file but avoid unnecessary changes.
+
+Solution: Ansible’s `copy` module automatically does this.
+
+- name: Copy config file
+  copy:
+    src: myconfig.conf
+    dest: /etc/myconfig.conf
+  notify: Restart Apache
+
+Explanation:  
+- If content is identical, no action is taken.  
+- `notify` triggers `Restart Apache` only if file changes.
+
+---
+
+ 4. Ensuring a Service is Running
+
+Scenario: Ensure a service is always running.
+
+Solution:
+
+- name: Restart Apache if not running
+  service:
+    name: httpd
+    state: restarted
+
+Explanation:  
+- `state: restarted` ensures the service restarts if it’s down.
+
+---
+
+ 5. Speeding Up Playbook Execution
+
+Scenario: Your playbook runs too slow.
+
+Solutions:
+
+- Increase parallelism  
+  Edit `ansible.cfg`:  
+  ini
+  [defaults]
+  forks = 50
+  
+- Use async execution
+  
+  - name: Run a background task
+    command: sleep 60
+    async: 60
+    poll: 5
+  
+Explanation:  
+- `forks` increases parallelism.  
+- `async` runs tasks in the background.
+
+---
+
+ 6. Conditional Task Execution
+
+Scenario: Run a task only if the system is RedHat-based.
+
+Solution: Use `when`
+
+- name: Install Apache on RedHat only
+  yum:
+    name: httpd
+    state: present
+  when: ansible_os_family == "RedHat"
+
+Explanation:  
+- `when` ensures task execution based on conditions.
+
+---
+
+ 7. Storing Sensitive Data
+
+Scenario: Store passwords securely.
+
+Solution: Use Ansible Vault
+
+ansible-vault encrypt secrets.yml
+
+Usage in Playbooks:
+
+- name: Use Vault Encrypted File
+  include_vars: secrets.yml
+
+Explanation:  
+- Vault encrypts sensitive data.
+
+---
+
+ 8. Rolling Back Configuration Changes
+
+Scenario: Revert changes if something goes wrong.
+
+Solution: Use the `backup` option.
+
+- name: Backup old configuration before applying new
+  template:
+    src: app.conf.j2
+    dest: /etc/app.conf
+    backup: yes
+
+Explanation:  
+- `backup: yes` keeps the old file.
+
+---
+
+ 9. Running a Specific Task from Playbook
+
+Scenario: Execute only a specific task.
+
+Solution: Use tags.
+yaml
+- name: Install Apache
+  yum:
+    name: httpd
+    state: present
+  tags: apache
+
+Command to run only this task:
+
+ansible-playbook site.yml --tags apache
+
+Explanation:  
+- Tags filter specific tasks.
+
+---
+
+ 10. Fetching System Information
+Scenario: Gather information about hosts.
+
+Solution: Use Ansible Facts.
+
+ansible all -m setup
+
+Explanation:  
+- This retrieves OS, memory, CPU details, etc.
+
+---
+
+ 11. Rolling Updates – One Server at a Time
+
+Scenario: Update one server at a time.
+
+Solution: Use `serial`
+
+- hosts: webservers
+  serial: 1
+
+Explanation:  
+- Ensures only one server is updated at a time.
+
+---
+
+ 12. Running a Task Only Once
+
+Scenario: Ensure a task runs only on one machine.
+
+Solution: Use `run_once: true`
+yaml
+- name: Create a database only once
+  mysql_db:
+    name: mydb
+    state: present
+  run_once: true
+
+Explanation:  
+- Even in multi-node playbooks, this runs once.
+
+---
+
+ 13. Rolling Back on Failure
+
+Scenario: Ensure rollback happens if a task fails.
+
+Solution: Use `block`, `rescue`, and `always`
+
+- block:
+    - name: Deploy application
+      command: /bin/false
+  rescue:
+    - name: Rollback changes
+      command: echo "Rollback"
+  always:
+    - name: Cleanup
+      command: echo "Cleaning up"
+
+Explanation:  
+- `block`: Main task  
+- `rescue`: Runs if failure occurs  
+- `always`: Runs regardless  
+
+---
+
+ 14. Dynamic Inventory Usage
+
+Scenario: Fetch inventory dynamically from AWS.
+
+Solution: Use dynamic inventory.
+
+ansible-inventory --list -i aws_ec2.yml
+
+Explanation:
+
+- Automates cloud instance discovery.
+
+---
+
+ 15. Scheduling Playbooks
+
+Scenario: Run Ansible Playbook automatically every night.
+
+Solution: Use `cron`
+
+- cron:
+    name: "Run Playbook"
+    job: "/usr/bin/ansible-playbook /home/user/playbook.yml"
+    minute: "0"
+    hour: "2"
+
+Explanation:  
+- Ensures scheduled execution.
+
+---
+
+ 16. Debugging Playbooks
+
+Scenario: Debug failing playbooks.
+
+Solution: Use `-vvv`  
+
+ansible-playbook site.yml -vvv
+
+Explanation:  
+- Provides detailed logs.
+
+---
+
+ 17. Retrying Failed Tasks
+
+Scenario: Retry on failure.
+
+Solution: Use `until`
+
+- name: Retry task
+  command: /bin/false
+  register: result
+  retries: 5
+  delay: 10
+  until: result.rc == 0
+
+Explanation:  
+- Retries up to 5 times.
+
+---
+
+ 18. Managing Secrets in Large Setups
+
+Scenario: Securely manage secrets.
+
+Solution: Use HashiCorp Vault or Ansible Vault.
+
+---
+
+ 19. Using Ansible for Network Automation
+
+Scenario: Automate switch/router configuration.
+
+Solution: Use `ios_config`
+yaml
+- name: Configure Cisco Router
+  ios_config:
+    lines:
+      - hostname R1
+
+
