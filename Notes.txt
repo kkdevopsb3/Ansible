@@ -303,9 +303,9 @@ sudo su - ansible
 sudo vi /etc/ansible/hosts
 
 [my_hosts]
-172.31.4.10 ansible_ssh_user=ec2-user ansible_ssh_private_key_file=~/kkdevopsbl3b2.pem
+13.232.234.191 ansible_ssh_user=ec2-user ansible_ssh_private_key_file=~/kkdevopsbl3b2.pem
 
-172.31.15.109 ansible_ssh_user=ec2-user ansible_ssh_private_key_file=~/kkdevopsbl3b2.pem
+15.207.85.10 ansible_ssh_user=ec2-user ansible_ssh_private_key_file=~/kkdevopsbl3b2.pem
 
 
 NOTE: pls copy the pem file into linux server
